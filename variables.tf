@@ -1,25 +1,37 @@
 # variables.tf
 
 variable "vpcCIDRblock" {
-   default = "10.0.0.0/16"
-}
-
-variable "subnetCIDRblock" {
-   default = "10.0.0.0/24"
+  default = "10.0.0.0/16"
 }
 
 variable "instanceTenancy" {
-   default = "default"
+  default = "default"
 }
 
 variable "dnsSupport" {
-   default = true
+  default = true
 }
 
 variable "dnsHostNames" {
-   default = true
+  default = true
 }
 
-variable "destinationCIDRblock" {
-   default = "0.0.0.0/0"
+variable "defaultCIDRblock" {
+  default = "0.0.0.0/0"
+}
+
+variable "instanceType" {
+  default = "t2.micro"
+}
+
+variable "availabilityZoneA" {
+  default = "us-east-1a" 
+}
+
+variable "ubuntuAmiNamePatten" {
+  default = "ami-ubuntu-18.04*"
+}
+
+variable "availabilityZoneB" {
+  default = "us-east-1b" 
 }

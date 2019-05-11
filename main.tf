@@ -6,7 +6,7 @@ provider "aws" {
 
 # create the VPC
 resource "aws_vpc" "vpc-RoK" {
-  cidr_block           = "10.0.0.0/26"
+  cidr_block           = "${var.vpcCIDRblock}"
   instance_tenancy     = "${var.instanceTenancy}" 
   enable_dns_support   = "${var.dnsSupport}" 
   enable_dns_hostnames = "${var.dnsHostNames}"
@@ -27,7 +27,7 @@ resource "aws_internet_gateway" "gtw-RoK" {
 resource "aws_subnet" "subnet-public-a-RoK" {
   vpc_id                  = "${aws_vpc.vpc-RoK.id}"
   cidr_block              = "10.0.0.0/28"
-  availability_zone       = "us-east-1a"
+  availability_zone       = "${var.availabilityZoneA}"
   tags = {
      Name = "Public Subnet RoK"
   }
@@ -37,7 +37,7 @@ resource "aws_subnet" "subnet-public-a-RoK" {
 resource "aws_subnet" "subnet-private-a-RoK" {
   vpc_id                  = "${aws_vpc.vpc-RoK.id}"
   cidr_block              = "10.0.0.16/28"
-  availability_zone       = "us-east-1a"
+  availability_zone       = "${var.availabilityZoneA}"
   tags = {
      Name = "Private Subnet RoK"
   }
@@ -47,7 +47,7 @@ resource "aws_subnet" "subnet-private-a-RoK" {
 resource "aws_subnet" "subnet-public-b-RoK" {
   vpc_id                  = "${aws_vpc.vpc-RoK.id}"
   cidr_block              = "10.0.0.32/28"
-  availability_zone       = "us-east-1b"
+  availability_zone       = "${var.availabilityZoneB}"
   tags = {
      Name = "Public Subnet RoK 2"
   }
@@ -57,7 +57,7 @@ resource "aws_subnet" "subnet-public-b-RoK" {
 resource "aws_subnet" "subnet-private-b-RoK" {
   vpc_id                  = "${aws_vpc.vpc-RoK.id}"
   cidr_block              = "10.0.0.48/28"
-  availability_zone       = "us-east-1b"
+  availability_zone       = "${var.availabilityZoneB}"
   tags = {
      Name = "Private Subnet RoK 2"
   }
@@ -84,7 +84,7 @@ resource "aws_route_table" "public-rt-RoK" {
 # Create the Internet Access
 resource "aws_route" "RoK-internet-access" {
   route_table_id        = "${aws_route_table.public-rt-RoK.id}"
-  destination_cidr_block = "0.0.0.0/0"
+  destination_cidr_block = "${var.defaultCIDRblock}"
   gateway_id             = "${aws_internet_gateway.gtw-RoK.id}"
 }
 
@@ -128,7 +128,7 @@ resource "aws_network_acl_rule" "nacl-rule-out-smtp-RoK" {
     rule_number    = 200
     protocol       = "tcp"
     rule_action    = "allow"
-    cidr_block     = "0.0.0.0/0"
+    cidr_block     = "${var.defaultCIDRblock}"
     from_port      = 25
     to_port        = 25
 }
@@ -140,7 +140,7 @@ resource "aws_network_acl_rule" "nacl-rule-in-http-RoK" {
     rule_number    = 50
     protocol       = "tcp"
     rule_action    = "allow"
-    cidr_block     = "0.0.0.0/0"
+    cidr_block     = "${var.defaultCIDRblock}"
     from_port      = 80
     to_port        = 80
 }
@@ -152,7 +152,7 @@ resource "aws_network_acl_rule" "nacl-rule-in-ssh-RoK" {
     rule_number    = 100
     protocol       = "tcp"
     rule_action    = "allow"
-    cidr_block     = "0.0.0.0/0"
+    cidr_block     = "${var.defaultCIDRblock}"
     from_port      = 22
     to_port        = 22
 }
@@ -171,7 +171,7 @@ resource "aws_security_group_rule" "sg-rule-http-in-RoK" {
   from_port         = 80
   to_port           = 80
   protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["${var.defaultCIDRblock}"]
 }
 
 # Create main security group ssh inbound rule
@@ -181,7 +181,7 @@ resource "aws_security_group_rule" "sg-rule-ssh-in-RoK" {
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["${var.defaultCIDRblock}"]
 }
 
 # Get an AMI id
@@ -190,7 +190,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ami-ubuntu-18.04*"]
+    values = ["${var.ubuntuAmiNamePatten}"]
   }
 
   filter {
@@ -269,10 +269,10 @@ EOF
 # Create application instance 1
 resource "aws_instance" "app-instance-1-RoK" {
   ami               = "${data.aws_ami.ubuntu.id}"
-  instance_type     = "t2.micro"
+  instance_type     = "${var.instanceType}"
   subnet_id         = "${aws_subnet.subnet-public-a-RoK.id}"
   vpc_security_group_ids   = ["${aws_security_group.main-sg-RoK.id}"]
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.availabilityZoneA}"
   key_name = "${aws_key_pair.renato-ec2-keypair.key_name}"
   iam_instance_profile = "${aws_iam_instance_profile.app-instance-profile-RoK.name}"
   associate_public_ip_address = false
@@ -287,10 +287,10 @@ resource "aws_instance" "app-instance-1-RoK" {
 # Create application instance 2
 resource "aws_instance" "app-instance-2-RoK" {
   ami               = "${data.aws_ami.ubuntu.id}"
-  instance_type     = "t2.micro"
+  instance_type     = "${var.instanceType}"
   subnet_id         = "${aws_subnet.subnet-public-b-RoK.id}"
   vpc_security_group_ids   = ["${aws_security_group.main-sg-RoK.id}"]
-  availability_zone = "us-east-1b"
+  availability_zone = "${var.availabilityZoneB}"
   key_name = "${aws_key_pair.renato-ec2-keypair.key_name}"
   iam_instance_profile = "${aws_iam_instance_profile.app-instance-profile-RoK.name}"
   associate_public_ip_address = false
@@ -417,7 +417,7 @@ resource "aws_elb" "elb-RoK" {
 #   ami               = "${data.aws_ami.ubuntu.id}"
 #   instance_type     = "t2.micro"
 #   subnet_id         = "${aws_subnet.subnet-private-b-RoK.id}"
-#   availability_zone = "us-east-1b"
+#   availability_zone = "${var.availabilityZoneB}"
 #   tags = {
 #     Name = "ApplicationInstance-3"
 #   }
