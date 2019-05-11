@@ -1,7 +1,7 @@
 provider "aws" {
-  access_key = "AKIAJDJ222VKN5OF2QJA"
-  secret_key = "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"
-  region     = "us-east-1"
+  shared_credentials_file = "~/.aws/credentials"
+  profile                 = "terraform"
+  region                  = "us-east-1"
 }
 
 # create the VPC
