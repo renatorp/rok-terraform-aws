@@ -34,22 +34,7 @@ resource "aws_key_pair" "renato-ec2-keypair" {
 # Create app instance role
 resource "aws_iam_role" "app-instance-role-RoK" {
   name = "app-instance-role-RoK"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
+  assume_role_policy = "${file("assume-role-policies/ec2.json")}"
 }
 
 # Create iam instance profile to associate role to instances
@@ -62,28 +47,7 @@ resource "aws_iam_instance_profile" "app-instance-profile-RoK" {
 resource "aws_iam_role_policy" "app-instance-policy-RoK" {
   name = "app-instance-policy-RoK"
   role = "${aws_iam_role.app-instance-role-RoK.id}"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:PutObject"
-      ],
-      "Effect": "Allow",
-      "Resource": "${data.aws_s3_bucket.s3-main-bucket-RoK.arn}/sandbox"
-    },
-    {
-      "Action": [
-        "sqs:SendMessage"
-      ],
-      "Effect": "Allow",
-      "Resource": "${aws_sqs_queue.file-processing-queue-RoK.arn}"
-    }
-  ]
-}
-EOF
+  policy = "${file("policies/ec2-appInstance.json")}"
 }
 
 # Create application instance 1
@@ -156,27 +120,7 @@ data "aws_elb_service_account" "main" {}
 
 resource "aws_s3_bucket_policy" "s3-infra-bucket-policy-RoK" {
   bucket = "${data.aws_s3_bucket.s3-infra-bucket-RoK.id}"
-
-  policy = <<POLICY
-{
-  "Id": "Policy",
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:PutObject"
-      ],
-      "Effect": "Allow",
-      "Resource": "${data.aws_s3_bucket.s3-infra-bucket-RoK.arn}/elb-logs/*",
-      "Principal": {
-        "AWS": [
-          "${data.aws_elb_service_account.main.arn}"
-        ]
-      }
-    }
-  ]
-}
-POLICY
+  policy = "${file("policies/s3-infraBucket.json")}"
 }
 
 # Create load balancer

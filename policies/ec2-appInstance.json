@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": "${data.aws_s3_bucket.s3-main-bucket-RoK.arn}/sandbox"
+    },
+    {
+      "Action": [
+        "sqs:SendMessage"
+      ],
+      "Effect": "Allow",
+      "Resource": "${aws_sqs_queue.file-processing-queue-RoK.arn}"
+    }
+  ]
+}
