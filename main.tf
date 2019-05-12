@@ -26,28 +26,14 @@ module "app-instance-RoK" {
   ]
 }
 
+module "sqs-queue-RoK" {
+  source = "./modules/sqs"
+  name   = "file-processing-queue-RoK"
+}
+
 # Reference infra S3 bucket
 data "aws_s3_bucket" "s3-infra-bucket-RoK" {
   bucket = "ripple-of-knowledge-infra"
-}
-
-# Create file processing dead letter queue
-resource "aws_sqs_queue" "file-processing-queue-dlq-RoK" {
-  name                      = "file-processing-queue-dlq-RoK"
-  delay_seconds             = 90
-  max_message_size          = 2048
-  message_retention_seconds = 86400
-  receive_wait_time_seconds = 10
-}
-
-# Create file processing message queue
-resource "aws_sqs_queue" "file-processing-queue-RoK" {
-  name                      = "file-processing-queue-RoK"
-  delay_seconds             = 90
-  max_message_size          = 2048
-  message_retention_seconds = 86400
-  receive_wait_time_seconds = 10
-  redrive_policy            = "{\"deadLetterTargetArn\":\"${aws_sqs_queue.file-processing-queue-dlq-RoK.arn}\",\"maxReceiveCount\":4}"
 }
 
 data "aws_elb_service_account" "main" {}
