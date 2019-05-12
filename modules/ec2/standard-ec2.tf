@@ -41,6 +41,12 @@ resource "aws_iam_role_policy" "app-instance-policy-RoK" {
   policy  = "${lookup(var.instances[count.index], "policy")}"
 }
 
+# Create key pair to allow accessing instances
+resource "aws_key_pair" "renato-ec2-keypair" {
+    key_name = "renato-ec2-key"
+    public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXyBYeS2BYc1fSJAt9feulak1XSYY3aM/L23qGsTAqtnFuFd+TbGTxlM1py1RwqveTb3sbKLk9iW42T99DGBK2C6Y1gjUNJyoNRczZhuMlyW1JPKnWXKz9oYjF/s4mQSKlOe/XO5AlbGQpItNsvbANiBpf4O+NyzR4Urr2f2EeXzbsYHhNMopOIaD52YtLa9TblSA/CZ8qFtT3f+I/iSvLxBnhE8BdK+gOlrD0YUsK5W6EfehXz3t7AY/Qcr429DIAJRi+o/jnzuGVhv5JfbE+odomLTc7GG5/oMwKW+KMbfFFUgumqFAqIsWsCNDP1KP1Qkq8c76vY4IMAVAUNyUj renatorp@c3p0"
+}
+
 # Create standard instance
 resource "aws_instance" "standard-instance" {
   count             = "${var.num_instances}"
@@ -49,7 +55,7 @@ resource "aws_instance" "standard-instance" {
   subnet_id         = "${lookup(var.instances[count.index], "subnet_id")}"
   vpc_security_group_ids   = ["${var.vpc_security_group_id}"]
   availability_zone = "${lookup(var.instances[count.index], "availability_zone")}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.renato-ec2-keypair.key_name}"
   iam_instance_profile = "${aws_iam_instance_profile.app-instance-profile-RoK.name}"
   associate_public_ip_address = false
   tags = {

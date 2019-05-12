@@ -4,18 +4,10 @@ provider "aws" {
   region                  = "us-east-1"
 }
 
-# Create key pair to allow accessing instances
-resource "aws_key_pair" "renato-ec2-keypair" {
-    key_name = "renato-ec2-key"
-    public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXyBYeS2BYc1fSJAt9feulak1XSYY3aM/L23qGsTAqtnFuFd+TbGTxlM1py1RwqveTb3sbKLk9iW42T99DGBK2C6Y1gjUNJyoNRczZhuMlyW1JPKnWXKz9oYjF/s4mQSKlOe/XO5AlbGQpItNsvbANiBpf4O+NyzR4Urr2f2EeXzbsYHhNMopOIaD52YtLa9TblSA/CZ8qFtT3f+I/iSvLxBnhE8BdK+gOlrD0YUsK5W6EfehXz3t7AY/Qcr429DIAJRi+o/jnzuGVhv5JfbE+odomLTc7GG5/oMwKW+KMbfFFUgumqFAqIsWsCNDP1KP1Qkq8c76vY4IMAVAUNyUj renatorp@c3p0"
-}
-
 # Create application instance 1 + application instance 2
 module "app-instance-RoK" {
   source                  = "./modules/ec2"
   vpc_security_group_id   = "${aws_security_group.main-sg-RoK.id}"
-  key_name                = "${aws_key_pair.renato-ec2-keypair.key_name}"
-  
   num_instances = 2
 
   instances               = [
@@ -32,11 +24,6 @@ module "app-instance-RoK" {
       instance_name           =  "ApplicationInstance-2"
     }
   ]
-}
-
-# Reference main app S3 bucket
-data "aws_s3_bucket" "s3-main-bucket-RoK" {
-  bucket = "ripple-of-knowledge"
 }
 
 # Reference infra S3 bucket

@@ -16,9 +16,6 @@ variable "instances" {
   description = "Required values: subnet_id, availability_zone, instance_name, policy"
 }
 
-variable "key_name" {
-}
-
 variable "num_instances" {
   default = 1
 }
