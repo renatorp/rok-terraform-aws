@@ -4,85 +4,33 @@ provider "aws" {
   region                  = "us-east-1"
 }
 
-# Get an AMI id
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["${var.ubuntuAmiNamePatten}"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-  owners = ["234212695392"] # Canonical ami-0ac019f4fcb7cb7e6
-}
-
 # Create key pair to allow accessing instances
 resource "aws_key_pair" "renato-ec2-keypair" {
     key_name = "renato-ec2-key"
     public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXyBYeS2BYc1fSJAt9feulak1XSYY3aM/L23qGsTAqtnFuFd+TbGTxlM1py1RwqveTb3sbKLk9iW42T99DGBK2C6Y1gjUNJyoNRczZhuMlyW1JPKnWXKz9oYjF/s4mQSKlOe/XO5AlbGQpItNsvbANiBpf4O+NyzR4Urr2f2EeXzbsYHhNMopOIaD52YtLa9TblSA/CZ8qFtT3f+I/iSvLxBnhE8BdK+gOlrD0YUsK5W6EfehXz3t7AY/Qcr429DIAJRi+o/jnzuGVhv5JfbE+odomLTc7GG5/oMwKW+KMbfFFUgumqFAqIsWsCNDP1KP1Qkq8c76vY4IMAVAUNyUj renatorp@c3p0"
 }
 
-# Create app instance role
-resource "aws_iam_role" "app-instance-role-RoK" {
-  name = "app-instance-role-RoK"
-  assume_role_policy = "${file("assume-role-policies/ec2.json")}"
-}
+# Create application instance 1 + application instance 2
+module "app-instance-RoK" {
+  source                  = "./modules/ec2"
+  vpc_security_group_id   = "${aws_security_group.main-sg-RoK.id}"
+  key_name                = "${aws_key_pair.renato-ec2-keypair.key_name}"
+  
+  num_instances = 2
 
-# Create iam instance profile to associate role to instances
-resource "aws_iam_instance_profile" "app-instance-profile-RoK" {
-  name = "app-instance-profile-RoK"
-  role = "${aws_iam_role.app-instance-role-RoK.name}"
-}
-
-# Create access policies for app instances 
-resource "aws_iam_role_policy" "app-instance-policy-RoK" {
-  name = "app-instance-policy-RoK"
-  role = "${aws_iam_role.app-instance-role-RoK.id}"
-  policy = "${file("policies/ec2-appInstance.json")}"
-}
-
-# Create application instance 1
-resource "aws_instance" "app-instance-1-RoK" {
-  ami               = "${data.aws_ami.ubuntu.id}"
-  instance_type     = "${var.instanceType}"
-  subnet_id         = "${aws_subnet.subnet-public-a-RoK.id}"
-  vpc_security_group_ids   = ["${aws_security_group.main-sg-RoK.id}"]
-  availability_zone = "${var.availabilityZoneA}"
-  key_name = "${aws_key_pair.renato-ec2-keypair.key_name}"
-  iam_instance_profile = "${aws_iam_instance_profile.app-instance-profile-RoK.name}"
-  associate_public_ip_address = false
-  tags = {
-    Name = "ApplicationInstance-1"
-  }
-  depends_on = [
-    "aws_iam_role_policy.app-instance-policy-RoK"
-  ]
-}
-
-# Create application instance 2
-resource "aws_instance" "app-instance-2-RoK" {
-  ami               = "${data.aws_ami.ubuntu.id}"
-  instance_type     = "${var.instanceType}"
-  subnet_id         = "${aws_subnet.subnet-public-b-RoK.id}"
-  vpc_security_group_ids   = ["${aws_security_group.main-sg-RoK.id}"]
-  availability_zone = "${var.availabilityZoneB}"
-  key_name = "${aws_key_pair.renato-ec2-keypair.key_name}"
-  iam_instance_profile = "${aws_iam_instance_profile.app-instance-profile-RoK.name}"
-  associate_public_ip_address = false
-  tags = {
-    Name = "ApplicationInstance-2"
-  }
-  depends_on = [
-    "aws_iam_role_policy.app-instance-policy-RoK"
+  instances               = [
+    {
+      policy                  = "${file("policies/ec2-appInstance.json")}"
+      subnet_id               = "${aws_subnet.subnet-public-a-RoK.id}" 
+      availability_zone       = "${var.availabilityZoneA}" 
+      instance_name           = "ApplicationInstance-1"
+    },
+    {
+      policy                  = "${file("policies/ec2-appInstance.json")}"
+      subnet_id               = "${aws_subnet.subnet-public-b-RoK.id}" 
+      availability_zone       = "${var.availabilityZoneB}" 
+      instance_name           =  "ApplicationInstance-2"
+    }
   ]
 }
 
@@ -95,7 +43,6 @@ data "aws_s3_bucket" "s3-main-bucket-RoK" {
 data "aws_s3_bucket" "s3-infra-bucket-RoK" {
   bucket = "ripple-of-knowledge-infra"
 }
-
 
 # Create file processing dead letter queue
 resource "aws_sqs_queue" "file-processing-queue-dlq-RoK" {
@@ -149,7 +96,7 @@ resource "aws_elb" "elb-RoK" {
     interval            = 30
   }
 
-  instances             = ["${aws_instance.app-instance-1-RoK.id}","${aws_instance.app-instance-2-RoK.id}"]
+  instances             = ["${module.app-instance-RoK.instance_ids}"]
   subnets               = ["${aws_subnet.subnet-public-a-RoK.id}","${aws_subnet.subnet-public-b-RoK.id}"]
 }
 

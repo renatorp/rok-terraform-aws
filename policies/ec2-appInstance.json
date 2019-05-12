@@ -6,14 +6,14 @@
         "s3:PutObject"
       ],
       "Effect": "Allow",
-      "Resource": "${data.aws_s3_bucket.s3-main-bucket-RoK.arn}/sandbox"
+      "Resource": "arn:aws:s3:::ripple-of-knowledge/sandbox"
     },
     {
       "Action": [
         "sqs:SendMessage"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_sqs_queue.file-processing-queue-RoK.arn}"
+      "Resource": "arn:aws:sqs:*:974616941221:file-processing-queue-RoK"
     }
   ]
 }

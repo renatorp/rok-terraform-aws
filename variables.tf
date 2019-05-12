@@ -20,16 +20,9 @@ variable "defaultCIDRblock" {
   default = "0.0.0.0/0"
 }
 
-variable "instanceType" {
-  default = "t2.micro"
-}
 
 variable "availabilityZoneA" {
   default = "us-east-1a" 
-}
-
-variable "ubuntuAmiNamePatten" {
-  default = "ami-ubuntu-18.04*"
 }
 
 variable "availabilityZoneB" {

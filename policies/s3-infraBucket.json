@@ -7,10 +7,10 @@
         "s3:PutObject"
       ],
       "Effect": "Allow",
-      "Resource": "${data.aws_s3_bucket.s3-infra-bucket-RoK.arn}/elb-logs/*",
+      "Resource": "arn:aws:s3:::ripple-of-knowledge-infra/elb-logs/*",
       "Principal": {
         "AWS": [
-          "${data.aws_elb_service_account.main.arn}"
+          "127311923021"
         ]
       }
     }
